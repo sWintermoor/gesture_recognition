@@ -2,3 +2,5 @@ lightning
 torch
 torchinfo
 mediapipe
+pandas
+dotenv
