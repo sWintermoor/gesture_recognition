@@ -27,14 +27,18 @@ class MultiHeadAttention(nn.Module):
         return q_split, k_split, v_split
 
 
-    def attention(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
+    def attention(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, mask=None) -> torch.Tensor:
         score_input = (q @ k.transpose(-2, -1)) / math.sqrt(self.d_head)
+
+        if mask is not None:
+            score_input = score_input.masked_fill(mask[:, None, None, :], float('-inf'))
+
         score = torch.softmax(score_input, dim=-1) 
         score = score @ v
         return score
 
 
-    def forward(self, x_input) -> torch.Tensor:
+    def forward(self, x_input, mask=None) -> torch.Tensor:
         Q = self.w_q(x_input)
         K = self.w_k(x_input)
         V = self.w_v(x_input)
@@ -45,7 +49,7 @@ class MultiHeadAttention(nn.Module):
 
         for i in range(self.nheads):
             Q_i, K_i, V_i = Q_split[:, i, :, :], K_split[:, i, :, :], V_split[:, i, :, :]
-            head = self.attention(Q_i, K_i, V_i)
+            head = self.attention(Q_i, K_i, V_i, mask=mask)
             head_query.append(head)
 
         head_query = torch.stack(head_query, dim=1)
@@ -70,9 +74,9 @@ class EncodingLayer(nn.Module):
             nn.Linear(dim_ff, d_model, bias=True)
         )
 
-    def forward(self, x_input):
+    def forward(self, x_input, mask=None):
         x = self.norm1(x_input)
-        x = self.attention(x)
+        x = self.attention(x, mask)
         x = self.dropout1(x)
         x_res = x + x_input
 

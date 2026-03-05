@@ -26,22 +26,27 @@ class KeypointTransformer(nn.Module):
 
         self.pos_encode = SinusoidalPositionalEncoding(d_model=d_model)
 
-        self.layers = nn.Sequential(
-            *[EncodingLayer(nheads=nheads, d_model=d_model, dim_ff=dim_ff, dropout_p=dropout_p) for _ in range(nlayers)]
+        self.layers = nn.ModuleList(
+            [EncodingLayer(nheads=nheads, d_model=d_model, dim_ff=dim_ff, dropout_p=dropout_p) for _ in range(nlayers)]
         )
 
         self.final_norm = nn.Linear(d_model, num_classes)
         
 
-    def forward(self, x_input):
+    def forward(self, x_input, mask=None):
         x = self.input_proj(x_input)
 
         batch_size = x.size(0)
         cls = self.cls.expand(batch_size, -1, -1)
         x = torch.concat([cls, x], dim=1)
 
+        if mask is not None:
+            cls_mask = torch.zeros(batch_size, 1, dtype=torch.bool, device=mask.device)
+            mask = torch.cat([cls_mask, mask], dim=1)
+
         x = self.pos_encode(x)
-        x = self.layers(x)
+        for layer in self.layers:
+            x = layer(x, mask=mask)
 
         cls = x[:, 0, :]
         logits = self.final_norm(cls)
@@ -60,8 +65,8 @@ class LitKeypointTransformer(L.LightningModule):
         return self.model(x_input)
     
     def training_step(self, batch, batch_idx):
-        x, y = batch
-        y_hat = self(x)
+        x, mask, y = batch
+        y_hat = self(x, mask=~mask) # inverting because of torch logic
         loss = self.loss_fn(y_hat, y)
         
         self.log("train_loss", loss, prog_bar=True, on_step=True, on_epoch=True)
