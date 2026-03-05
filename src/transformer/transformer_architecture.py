@@ -61,8 +61,8 @@ class LitKeypointTransformer(L.LightningModule):
         self.model = KeypointTransformer(input_size=input_size, d_model=d_model, num_classes=num_classes)
         self.loss_fn = nn.CrossEntropyLoss()
 
-    def forward(self, x_input):
-        return self.model(x_input)
+    def forward(self, x_input, mask=None):
+        return self.model(x_input, mask=mask)
     
     def training_step(self, batch, batch_idx):
         x, mask, y = batch
@@ -73,8 +73,8 @@ class LitKeypointTransformer(L.LightningModule):
         return loss
     
     def validation_step(self, batch, batch_idx):
-        x, y = batch
-        y_hat = self(x)
+        x, mask, y = batch
+        y_hat = self(x, mask=~mask)
         loss = self.loss_fn(y_hat, y)
 
         self.log("val_loss", loss, prog_bar=True, on_epoch=True)

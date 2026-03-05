@@ -31,7 +31,7 @@ class MultiHeadAttention(nn.Module):
         score_input = (q @ k.transpose(-2, -1)) / math.sqrt(self.d_head)
 
         if mask is not None:
-            score_input = score_input.masked_fill(mask[:, None, None, :], float('-inf'))
+            score_input = score_input.masked_fill(mask[:, None, :], float('-inf'))
 
         score = torch.softmax(score_input, dim=-1) 
         score = score @ v
@@ -54,7 +54,9 @@ class MultiHeadAttention(nn.Module):
 
         head_query = torch.stack(head_query, dim=1)
 
-        result = head_query.transpose(1, 2).contiguous().view(x_input.size(0), x_input.size(1), -1)
+        result = head_query.transpose(1, 2).contiguous()
+
+        result = result.view(x_input.size(0), x_input.size(1), -1)
 
         return self.output(result)
 
