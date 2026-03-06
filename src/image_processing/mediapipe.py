@@ -4,6 +4,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import os
 from dotenv import load_dotenv
+import cv2
 
 load_dotenv()
 
@@ -22,7 +23,9 @@ class MediaPipeProcessor:
 
 
     def processing_frame(self, frame):
-        image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame) #TODO: Check whether format changing is ok
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = np.ascontiguousarray(frame) 
+        image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame) 
         keypoints = self._extracting_keypoints(image)
 
         return keypoints
