@@ -4,3 +4,4 @@ torchinfo
 mediapipe
 pandas
 dotenv
+ipywidgets
