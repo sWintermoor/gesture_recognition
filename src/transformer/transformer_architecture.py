@@ -57,6 +57,7 @@ class KeypointTransformer(nn.Module):
 class LitKeypointTransformer(L.LightningModule):
     def __init__(self, input_size: int, d_model: int, num_classes: int):
         super().__init__()
+        self.save_hyperparameters()
 
         self.model = KeypointTransformer(input_size=input_size, d_model=d_model, num_classes=num_classes)
         self.loss_fn = nn.CrossEntropyLoss()
