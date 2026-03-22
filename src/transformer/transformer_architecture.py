@@ -33,7 +33,7 @@ class KeypointTransformer(nn.Module):
         self.final_norm = nn.Linear(d_model, num_classes)
         
 
-    def forward(self, x_input, mask=None):
+    def forward(self, x_input, mask=None, return_attentions=False):
         x = self.input_proj(x_input)
 
         batch_size = x.size(0)
@@ -44,14 +44,19 @@ class KeypointTransformer(nn.Module):
             cls_mask = torch.zeros(batch_size, 1, dtype=torch.bool, device=mask.device)
             mask = torch.cat([cls_mask, mask], dim=1)
 
+        attention_weights = []
         x = self.pos_encode(x)
         for layer in self.layers:
-            x = layer(x, mask=mask)
+            x, attn = layer(x, mask=mask)
+            attention_weights.append(attn)
 
         cls = x[:, 0, :]
         logits = self.final_norm(cls)
+
+        if return_attentions:
+            return logits, attention_weights
         
-        return logits 
+        return logits
 
 
 class LitKeypointTransformer(L.LightningModule):

@@ -33,9 +33,9 @@ class MultiHeadAttention(nn.Module):
         if mask is not None:
             score_input = score_input.masked_fill(mask[:, None, :], float('-inf'))
 
-        score = torch.softmax(score_input, dim=-1) 
-        score = score @ v
-        return score
+        attn_weights = torch.softmax(score_input, dim=-1) 
+        output = attn_weights @ v
+        return output, attn_weights
 
 
     def forward(self, x_input, mask=None) -> torch.Tensor:
@@ -46,19 +46,22 @@ class MultiHeadAttention(nn.Module):
         Q_split, K_split, V_split = self.split(Q, K, V)
 
         head_query = []
+        attention_weights = []
 
         for i in range(self.nheads):
             Q_i, K_i, V_i = Q_split[:, i, :, :], K_split[:, i, :, :], V_split[:, i, :, :]
-            head = self.attention(Q_i, K_i, V_i, mask=mask)
+            head, attn = self.attention(Q_i, K_i, V_i, mask=mask)
             head_query.append(head)
+            attention_weights.append(attn)
 
         head_query = torch.stack(head_query, dim=1)
+        attention_weights = torch.stack(attention_weights, dim=1)
 
         result = head_query.transpose(1, 2).contiguous()
 
         result = result.view(x_input.size(0), x_input.size(1), -1)
 
-        return self.output(result)
+        return self.output(result), attention_weights
 
 
 class EncodingLayer(nn.Module):
