@@ -5,3 +5,4 @@ mediapipe
 pandas
 dotenv
 ipywidgets
+scikit-learn
