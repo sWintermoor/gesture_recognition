@@ -17,12 +17,18 @@ class SinusoidalPositionalEncoding(nn.Module):
     def forward(self, x_input: torch.Tensor) -> torch.Tensor:
         pos_encode = torch.zeros_like(x_input)
         if(x_input.dim() == 3):
-            for pos in range(x_input.size(1)):
-                for i in range(x_input.size(2)):
-                    if i % 2 == 0:
-                        pos_encode[:, pos, i] = x_input[:, pos, i] + torch.sin(pos * self.omega[i//2])
-                    else:
-                        pos_encode[:, pos, i] = x_input[:, pos, i] + torch.cos(pos * self.omega[(i-1)//2])
+            T = x_input.size(1)
+            d_model = x_input.size(2)
+
+            pos = torch.arange(T, device=x_input.device).unsqueeze(1)
+
+            pos_encode = torch.arange(T, d_model, device=x_input.device)   
+            
+            pos_encode[:, 0::2] = torch.sin(pos * self.omega[:d_model//2])
+            pos_encode[:, 1::2] = torch.cos(pos * self.omega[:d_model - d_model//2])
+
+            pos_encode = x_input + pos_encode.unsqueeze(0)
+
         else:
             raise ValueError(f"Wrong input dimension. Your dimension is: {x_input.dim()}, but should be: 3")
         
