@@ -30,7 +30,7 @@ class KeypointTransformer(nn.Module):
             [EncodingLayer(nheads=nheads, d_model=d_model, dim_ff=dim_ff, dropout_p=dropout_p) for _ in range(nlayers)]
         )
 
-        self.final_norm = nn.Linear(d_model, num_classes)
+        self.classifier = nn.Linear(d_model, num_classes)
         
 
     def forward(self, x_input, mask=None, return_attentions=False):
@@ -51,7 +51,7 @@ class KeypointTransformer(nn.Module):
             attention_weights.append(attn)
 
         cls = x[:, 0, :]
-        logits = self.final_norm(cls)
+        logits = self.classifier(cls)
 
         if return_attentions:
             return logits, attention_weights
