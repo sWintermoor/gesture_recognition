@@ -22,7 +22,7 @@ class SinusoidalPositionalEncoding(nn.Module):
 
             pos = torch.arange(T, device=x_input.device).unsqueeze(1)
 
-            pos_encode = torch.arange(T, d_model, device=x_input.device)   
+            pos_encode = torch.zeros((T, d_model), device=x_input.device)   
             
             pos_encode[:, 0::2] = torch.sin(pos * self.omega[:d_model//2])
             pos_encode[:, 1::2] = torch.cos(pos * self.omega[:d_model - d_model//2])
