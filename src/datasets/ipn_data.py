@@ -8,23 +8,23 @@ from random import randint
 import tqdm
 
 load_dotenv()
-GESTURE_VIDEOS_PATH = os.getenv("IPN_GESTURE_VIDEOS")
 
 class IPNData(Dataset):
-    def __init__(self):
-        self.paths = glob.glob(f'{GESTURE_VIDEOS_PATH}/videos/videos/*')
+    def __init__(self, source_path):
+        self.source_path = source_path 
+        self.paths = glob.glob(f'{self.source_path}/videos/videos/*')
         self.load_data()
 
 
     def load_data(self):
-        file = open(f"{GESTURE_VIDEOS_PATH}/annotations/annotations/class_details.txt")
+        file = open(f"{self.source_path}/annotations/annotations/class_details.txt")
         text = file.read().split('\n')
         label_id_dict = dict()
         for row in text:
             info = row.split('\t')[:3]
             label_id_dict[info[0]] = info[1:] 
 
-        file = open(f"{GESTURE_VIDEOS_PATH}/annotations/annotations/Annot_List.txt")
+        file = open(f"{self.source_path}/annotations/annotations/Annot_List.txt")
         text = file.read().split('\n')
         video_info_dict = dict()
         for row in text:
@@ -63,7 +63,7 @@ class IPNData(Dataset):
         return self.label_id_dict
     
     def get_num_videos(self):
-        return len(glob.glob(f'{GESTURE_VIDEOS_PATH}/videos/videos/*'))
+        return len(glob.glob(f'{self.source_path}/videos/videos/*'))
 
     def get_frames(self, path, info):
         frames = []
